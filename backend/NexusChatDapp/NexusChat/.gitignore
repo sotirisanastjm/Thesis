@@ -1,0 +1,10 @@
+# Ignore appsettings.json for security reasons
+appsettings.json
+appsettings.Development.json
+appsettings.*.json
+
+# Other common files to ignore
+bin/
+obj/
+.vscode/
+.DS_Store
