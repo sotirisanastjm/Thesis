@@ -11,7 +11,7 @@ type Message = {
 export const ChatBot: React.FC = () => {
     const sendMessage = async (message: Message) => {
         try {
-            const response = await fetch("https://72.145.8.72:7261/api/Chat/sendMessage",
+            const response = await fetch("https://localhost:7261/api/Chat/sendMessage",
                 {
                     method: "POST",
                     headers: {
