@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "z14zfyzCkM5R5+tjGZlRgOLWa7AmhUn/HWtg1GCZcMeXhCknIuUHoKw0llzQNxaY6mFs20rRXhSkPY5Dm4qr7g==",
+  "dgSpecHash": "4IycAxdnG19CMXJWDSyo4XoNdZLCNyL9xasy/VosNZwkW2vw+yUdWwzLksT2/5tafTOWz+9YUXEN134GtF44Vw==",
   "success": true,
   "projectFilePath": "C:\\Projects\\Thesis\\backend\\NexusChatDapp\\NexusChat\\NexusChat.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\EX931HA\\.nuget\\packages\\microsoft.extensions.apidescription.server\\3.0.0\\microsoft.extensions.apidescription.server.3.0.0.nupkg.sha512",
     "C:\\Users\\EX931HA\\.nuget\\packages\\microsoft.openapi\\1.2.3\\microsoft.openapi.1.2.3.nupkg.sha512",
+    "C:\\Users\\EX931HA\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\EX931HA\\.nuget\\packages\\swashbuckle.aspnetcore\\6.2.3\\swashbuckle.aspnetcore.6.2.3.nupkg.sha512",
     "C:\\Users\\EX931HA\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.2.3\\swashbuckle.aspnetcore.swagger.6.2.3.nupkg.sha512",
     "C:\\Users\\EX931HA\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.2.3\\swashbuckle.aspnetcore.swaggergen.6.2.3.nupkg.sha512",

@@ -17,7 +17,7 @@ function App() {
                 <Route path="*" element={<Page404 />} />
             </Routes>
           </main>
-          <Footer />
+          {location.pathname !== '/chat' && <Footer />}
         </Router>
       </div>
     );

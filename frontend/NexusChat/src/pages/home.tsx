@@ -1,5 +1,5 @@
 
-import {Hero} from "../modules/hero"
+import {Hero} from "../modules/Hero"
 import { Info } from "../modules/Info";
 
 export const Home = () =>{

@@ -1,10 +1,11 @@
+import { ChatBot } from "../modules/chatbot";
 
 
 export const Chat = () =>{
    
     return (
        <>
-       <h1>Hello chat</h1>
+       <ChatBot/>
        </>
     );
 }
