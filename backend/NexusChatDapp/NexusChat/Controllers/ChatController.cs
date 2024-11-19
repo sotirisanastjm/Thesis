@@ -21,9 +21,9 @@ namespace NexusChat.Controllers
 
             if(msgRequest.Message != null || msgRequest.Message != "")
             {
-                var result = new MessageResponse();
-                result.Bot = new MessageItem("Hello how can i help you?", 0);
-                //var result = await this._aIService.GetAiResponse(msgRequest);
+                //var result = new MessageResponse();
+                //result.Bot = new MessageItem("Hello how can i help you?", 0);
+                var result = await this._aIService.GetAiResponse(msgRequest);
                 return Ok(result);
             }
             return BadRequest("Message cannot be null or empty");

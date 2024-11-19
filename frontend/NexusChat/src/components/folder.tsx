@@ -1,5 +1,5 @@
 export const Folder = (props: { title?: string; active?: boolean, moreFolders?: boolean }) => {
-    const title = props.title;
+    // const title = props.title;
     const active = props.active;
     const moreFolders = props.moreFolders;
 

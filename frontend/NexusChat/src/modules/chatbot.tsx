@@ -1,14 +1,9 @@
 import { v4 as uuidv4 } from 'uuid';
 import React, { useRef, useState, useEffect } from "react";
-
-type Message = {
-    id?: string;
-    date?: Date;
-    message: string;
-    sender: 0 | 1;
-};
+import { Message } from '../Models/Message';
 
 export const ChatBot: React.FC = () => {
+    
     const sendMessage = async (message: Message) => {
         try {
             const response = await fetch("https://localhost:7261/api/Chat/sendMessage",

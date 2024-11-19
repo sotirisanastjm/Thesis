@@ -12,7 +12,8 @@ namespace NexusChat.Models
 
     public class MessageItem
     {
-        public Guid Id { get; set; } 
+        public Guid Id { get; set; }
+        public Guid UserID { get; set; }
         public string Date { get; set; }
         public string Message { get; set; }
         public int Sender { get; set; }
@@ -45,10 +46,10 @@ namespace NexusChat.Models
 
     public class Choice
     {
-        public Message Message { get; set; }
+        public MessageDataModel Message { get; set; }
     }
 
-    public class Message
+    public class MessageDataModel
     {
         public string Content { get; set; }
     }
