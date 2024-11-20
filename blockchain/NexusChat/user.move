@@ -28,6 +28,7 @@ module nexuschat::user {
     /// Create a new user or reuse a deleted one
     public fun create_user(
         registry: &mut UserRegistry,
+        id: UID,
         wallet_address: vector<u8>,
         username: vector<u8>,
         password: vector<u8>,
@@ -41,6 +42,7 @@ module nexuschat::user {
                 let mut user = borrow_global_mut<User>(*user_id);
                 if (user.is_deleted) {
                     // Reuse the deleted user
+					user.id = id;
                     user.username = username;
                     user.password = password;
                     user.created_at = created_at;

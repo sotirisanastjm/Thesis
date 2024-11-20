@@ -5,14 +5,14 @@ namespace NexusChat.Services
     public class UserService
     {
        
-        public UseDataModelr GetUserByAddress(string address)
+        public ApplicationUser GetUserByAddress(string address)
         {
-            var user = new UseDataModelr();
+            var user = new ApplicationUser();
             return user;
         }
-        public UseDataModelr CreateUserProfile(string address)
-        {
-            var user = new UseDataModelr();
+        public ApplicationUser CreateUserProfile(string address)
+        {   
+            var user = new ApplicationUser();
             return user;
         }
     }
