@@ -44,6 +44,10 @@
               "target": "Package",
               "version": "[6.0.20, )"
             },
+            "Microsoft.AspNetCore.DataProtection": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
             "Microsoft.IdentityModel.Tokens": {
               "target": "Package",
               "version": "[8.2.0, )"

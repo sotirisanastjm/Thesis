@@ -8,7 +8,9 @@ module nexuschat::user {
         id: UID,
         wallet_address: vector<u8>,
         username: vector<u8>,
+        email: vector<u8>,
         password: vector<u8>,
+        role: vector<u8>,
         created_at: u64,
         is_deleted: bool,
     }
@@ -16,12 +18,15 @@ module nexuschat::user {
     /// Mapping of wallet addresses to User IDs for efficient lookups
     struct UserRegistry has key {
         table: Table<vector<u8>, ID>, // Maps wallet addresses to User object IDs
+        username_table: Table<vector<u8>, ID>, // Maps usernames to User object IDs
+        email_table: Table<vector<u8>, ID>, // Maps Emails to User object IDs
     }
 
     /// Initialize the UserRegistry
     public fun init_registry(ctx: &mut TxContext): UserRegistry {
         UserRegistry {
             table: Table::new(ctx),
+            username_table: Table::new(ctx),
         }
     }
 
@@ -31,7 +36,9 @@ module nexuschat::user {
         id: UID,
         wallet_address: vector<u8>,
         username: vector<u8>,
+        email: vector<u8>,
         password: vector<u8>,
+        role: vector<u8>,
         created_at: u64,
         ctx: &mut TxContext
     ): User {
@@ -42,9 +49,11 @@ module nexuschat::user {
                 let mut user = borrow_global_mut<User>(*user_id);
                 if (user.is_deleted) {
                     // Reuse the deleted user
-					user.id = id;
+                    user.id = id;
                     user.username = username;
                     user.password = password;
+                    user.email = email;
+                    user.role = role;
                     user.created_at = created_at;
                     user.is_deleted = false;
                     return user;
@@ -56,14 +65,18 @@ module nexuschat::user {
         let user = User {
             id: UID::new(ctx),
             wallet_address: wallet_address.clone(),
-            username,
+            username: username.clone(),
+            email,
             password,
+            role,
             created_at,
             is_deleted: false,
         };
 
         let user_id = ID::from(&user.id);
         Table::add(&mut registry.table, wallet_address, user_id);
+        Table::add(&mut registry.username_table, username, user_id);  // Add username to username table
+        Table::add(&mut registry.email_table, email, user_id);  // Add email to email table
         user
     }
 
@@ -99,11 +112,51 @@ module nexuschat::user {
     }
 
     /// Fetch a user by their ID
-    public fun fetch_user_by_id(user_id: ID): Option<User> {
-        if (exists<User>(user_id)) {
+    public fun get_user_by_id(
+        registry: &UserRegistry,
+        user_id: ID
+    ): Option<User> {
+        if exists<User>(user_id) {
             Some(borrow_global<User>(user_id))
         } else {
             None
+        }
+    }
+
+    /// Fetch a user by their username (find by username)
+    public fun get_user_by_username(
+        registry: &UserRegistry,
+        username: vector<u8>
+    ): Option<User> {
+        let user_id_opt = Table::borrow(&registry.username_table, &username);
+        match user_id_opt {
+            Some(user_id) => {
+                if exists<User>(*user_id) {
+                    let user = borrow_global<User>(*user_id);
+                    Some(user)
+                } else {
+                    None
+                }
+            },
+            None => None,
+        }
+    }
+    /// Fetch a user by their email (find by email)
+    public fun get_user_by_email(
+        registry: &UserRegistry,
+        email: vector<u8>
+    ): Option<User> {
+        let user_id_opt = Table::borrow(&registry.email_table, &email);
+        match user_id_opt {
+            Some(user_id) => {
+                if exists<User>(*user_id) {
+                    let user = borrow_global<User>(*user_id);
+                    Some(user)
+                } else {
+                    None
+                }
+            },
+            None => None,
         }
     }
 

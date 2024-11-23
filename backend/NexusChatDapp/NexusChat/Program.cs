@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Identity;
-using NexusChat.Context;
 using NexusChat.Models;
 using NexusChat.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,29 +25,36 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Retrieve the API key from configuration
 string apiKeyAI = builder.Configuration["AiService:ApiKey"];
 
-// Register AIService with the API key
 builder.Services.AddSingleton<AIService>(provider =>
 {
     return new AIService(provider.GetRequiredService<HttpClient>(), apiKeyAI);
 });
 
-
-// Register SuiService
 builder.Services.AddSingleton<SuiService>();
-builder.Services.AddSingleton<UserService>();
+builder.Services.AddSingleton<MoveService>();
+builder.Services.AddSingleton<AuthService>();
 
-//Register Identity
+string Jwtkey = builder.Configuration["Jwt:Key"];
+string Issuer = builder.Configuration["Jwt:Issuer"];
+string Audience = builder.Configuration["Jwt:Audience"];
 
-builder.Services.AddScoped<MoveService>();
-builder.Services.AddScoped<IUserStore<ApplicationUser>, CustomUserStore>();
-builder.Services.AddScoped<IUserPasswordStore<ApplicationUser>, CustomUserStore>();
-
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddDefaultTokenProviders();
-
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = Issuer,
+            ValidAudience = Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Jwtkey))
+        };
+    });
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
@@ -62,7 +70,7 @@ app.UseCors("AllowReactApp");
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
-
+app.UseAuthentication();
 app.MapControllers();
 
 app.Run();
