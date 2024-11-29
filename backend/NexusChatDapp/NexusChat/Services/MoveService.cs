@@ -17,7 +17,7 @@ namespace NexusChat.Services
         {
             var requestData = new
             {
-                ID = new Guid(),
+                ID = Guid.NewGuid(),
                 WalletAddress = user.WalletAddress,
                 Username = !string.IsNullOrEmpty(user.Username) ? user.Username : "",
                 Email = !string.IsNullOrEmpty(user.Email) ? user.Email : "",
@@ -83,7 +83,7 @@ namespace NexusChat.Services
         // Get a user by their ID
         public async Task<UserModel> GetUserByIdAsync(string id)
         {
-            var response = await _httpClient.GetAsync($"https://move-blockchain-api/fetch_user_by_id/{id}");
+            var response = await _httpClient.GetAsync($"https://move-blockchain-api/get_user_by_id/{id}");
 
             if (response.IsSuccessStatusCode)
             {

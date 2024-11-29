@@ -20,7 +20,7 @@ namespace NexusChat.Services
 
         public async Task<UserModel> CreateUser(UserRegisterModel model)
         {
-            if(string.IsNullOrEmpty(model.WalletAddress) && string.IsNullOrEmpty(model.Password))
+            if(!string.IsNullOrEmpty(model.WalletAddress) && !string.IsNullOrEmpty(model.Password))
             {
                 var walletIsValid = await _suiService.VerifyAddressAsync(model.WalletAddress);
                 if (walletIsValid)
