@@ -3,7 +3,6 @@ module nexuschat::user {
     use sui::storage::{Table, TableRef};
     use sui::tx_context::TxContext;
 
-    /// Define the User structure
     struct User has key {
         id: UID,
         wallet_address: vector<u8>,
@@ -17,9 +16,9 @@ module nexuschat::user {
 
     /// Mapping of wallet addresses to User IDs for efficient lookups
     struct UserRegistry has key {
-        table: Table<vector<u8>, ID>, // Maps wallet addresses to User object IDs
-        username_table: Table<vector<u8>, ID>, // Maps usernames to User object IDs
-        email_table: Table<vector<u8>, ID>, // Maps Emails to User object IDs
+        table: Table<vector<u8>, ID>, 
+        username_table: Table<vector<u8>, ID>, 
+        email_table: Table<vector<u8>, ID>, 
     }
 
     /// Initialize the UserRegistry
@@ -75,8 +74,8 @@ module nexuschat::user {
 
         let user_id = ID::from(&user.id);
         Table::add(&mut registry.table, wallet_address, user_id);
-        Table::add(&mut registry.username_table, username, user_id);  // Add username to username table
-        Table::add(&mut registry.email_table, email, user_id);  // Add email to email table
+        Table::add(&mut registry.username_table, username, user_id);  
+        Table::add(&mut registry.email_table, email, user_id); 
         user
     }
 

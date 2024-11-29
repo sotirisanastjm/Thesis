@@ -2,33 +2,31 @@ module nexuschat::chat_history {
     use sui::object::UID;
     use sui::tx_context::TxContext;
 
-    /// Structure for a single message in the chat history
     struct MessageItem has store {
-        id: vector<u8>, // Unique message ID
-        date: vector<u8>, // Timestamp in string format
-        message: vector<u8>, // Message content
-        sender: u8, // Sender type (e.g., 0 for user, 1 for bot)
+        id: vector<u8>, 
+        date: vector<u8>, 
+        message: vector<u8>, 
+        sender: u8, 
     }
 
-    /// Structure for ChatHistory
     struct ChatHistory has key, store {
-        id: UID, // Unique ID for the chat history
-        user_id: vector<u8>, // Associated User ID
-        messages: vector<MessageItem>, // List of messages
-        is_deleted: bool, // Marks history as deleted
+        id: UID, 
+        user_id: vector<u8>, 
+        messages: vector<MessageItem>, 
+        is_deleted: bool, 
     }
 
-    /// Registry to manage all ChatHistories
+    
     struct ChatHistoryRegistry has key {
-        id: UID, // Registry unique ID
-        chat_histories: vector<ChatHistory>, // Collection of all chat histories
+        id: UID, 
+        chat_histories: vector<ChatHistory>, 
     }
 
-    /// Create a new ChatHistoryRegistry
+    
     public fun create_registry(ctx: &mut TxContext): ChatHistoryRegistry {
         ChatHistoryRegistry {
             id: UID::new(ctx),
-            chat_histories: vector[] // Start empty
+            chat_histories: vector[]
         }
     }
 
@@ -65,7 +63,7 @@ module nexuschat::chat_history {
     }
 
 
-    /// Push new messages to a user's ChatHistory
+    /// Push new messages to a users ChatHistory
     public fun push_messages(
         registry: &mut ChatHistoryRegistry,
         user_id: vector<u8>,
