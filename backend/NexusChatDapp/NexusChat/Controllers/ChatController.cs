@@ -44,6 +44,20 @@ namespace NexusChat.Controllers
             
         }
 
+        [HttpPost("sendDisconnectedMsg")]
+        public async Task<IActionResult> SendDisconnectedMessage([FromBody] MessageItem msgRequest)
+        {
+            if (msgRequest.Message != null || msgRequest.Message != "")
+            {
+                var result = new MessageResponse();
+                result.Bot = new MessageItem("The AIService is offline, please try again later..", 0);
+
+                return Ok(result);
+            }
+            return BadRequest("Message cannot be null or empty");
+
+        }
+
     }
     
 }

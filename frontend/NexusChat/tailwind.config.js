@@ -29,7 +29,8 @@ export default {
         300: '#d3cab9',
         200: '#ddd6c4',
         100: '#e2daca' 
-      }
+      },
+      red: '#ff3333'
     },
     screens: {
       'xs': '100%',

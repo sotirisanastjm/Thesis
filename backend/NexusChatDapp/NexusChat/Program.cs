@@ -33,7 +33,7 @@ builder.Services.AddSingleton<AIService>(provider =>
 });
 
 builder.Services.AddSingleton<SuiService>();
-builder.Services.AddSingleton<MoveService>();
+builder.Services.AddSingleton<MoveClient>();
 builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<UserService>();
 

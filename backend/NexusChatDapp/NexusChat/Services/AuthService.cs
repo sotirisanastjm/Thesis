@@ -1,6 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
 using NexusChat.Models;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 using System.Security.Claims;
 using System.Text;
 
@@ -9,32 +10,29 @@ namespace NexusChat.Services
     public class AuthService
     {
         private IConfiguration _config;
-        private readonly MoveService _moveService;
+        private readonly MoveClient _moveClient;
         private readonly SuiService _suiService;
-        public AuthService(IConfiguration config, MoveService moveService, SuiService suiService)
+        private readonly UserService _userService;
+        public AuthService(IConfiguration config, MoveClient moveClient, SuiService suiService, UserService userService)
         {
             _config = config;
-            _moveService = moveService;
+            _moveClient = moveClient;
             _suiService = suiService;
+            _userService = userService;
         }
 
-        public async Task<UserModel> CreateUser(UserRegisterModel model)
+        public async Task<WalletValidationResult> ValidateExistingWallet(string address)
         {
-            if(!string.IsNullOrEmpty(model.WalletAddress) && !string.IsNullOrEmpty(model.Password))
+            var isWalletValid = await this._userService.ValidateWallet(address);
+            var result = new WalletValidationResult
             {
-                var walletIsValid = await _suiService.VerifyAddressAsync(model.WalletAddress);
-                if (walletIsValid)
-                {
-                    var user = new UserModel();
-                    user = await _moveService.CreateUserAsync(model);
-                    return user;
-                }
-                throw new Exception("Wrong Address");
-            }
-            throw new MissingFieldException();
+                Validate = isWalletValid,
+                Exists = isWalletValid ? await this._userService.GetUserByWallet(address) != null : false
+            };
+            return result;
         }
 
-        public async Task<UserModel> Authenticate(UserLoginModel loginUser = null, UserModel? unAuthorisedUser=null)
+        public async Task<UserModel> AuthenticateUser(UserLoginModel loginUser = null, UserModel? unAuthorisedUser=null)
         {
             var userDB = new UserModel();
             var userClient = loginUser !=null ? new UserModel(loginUser) : unAuthorisedUser != null ? unAuthorisedUser : null;
@@ -43,15 +41,15 @@ namespace NexusChat.Services
             {
                 if (!string.IsNullOrEmpty(loginUser.WalletAddress))
                 {
-                    userDB = await _moveService.GetUserByWalletAsync(loginUser.WalletAddress);
+                    userDB = await _moveClient.GetUserByWalletAsync(loginUser.WalletAddress);
                 }
                 else if (!string.IsNullOrEmpty(loginUser.Username))
                 {
-                    userDB = await _moveService.GetUserByNameAsync(loginUser.Username);
+                    userDB = await _moveClient.GetUserByNameAsync(loginUser.Username);
                 }
                 else if (!string.IsNullOrEmpty(loginUser.Email))
                 {
-                    userDB = await _moveService.GetUserByEmailAsync(loginUser.Email);
+                    userDB = await _moveClient.GetUserByEmailAsync(loginUser.Email);
                 }
                 else
                 {
@@ -122,4 +120,9 @@ namespace NexusChat.Services
             return GetJwtToken(user);
         }
     }
+}
+public class WalletValidationResult
+{
+    public bool Validate { get; set; }
+    public bool Exists { get; set; }
 }

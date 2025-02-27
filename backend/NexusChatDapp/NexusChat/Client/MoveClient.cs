@@ -1,17 +1,54 @@
 ﻿using NexusChat.Models;
-using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text;
 
 namespace NexusChat.Services
 {
-    public class MoveService
+    public class MoveClient
     {
         private readonly HttpClient _httpClient;
+        private const string SuiRpcUrl = "https://fullnode.devnet.sui.io";
 
-        public MoveService(HttpClient httpClient)
+        public MoveClient(HttpClient httpClient)
         {
+            //_httpClient = new HttpClient { BaseAddress = new Uri(SuiRpcUrl) };
             _httpClient = httpClient;
+
         }
 
+        public async Task<string> GreetingsAsync()
+        {
+            
+            var requestBody = new
+            {
+                jsonrpc = "2.0",
+                id = 1,
+                method = "unsafe_moveCall",
+                @params = new object[]
+                {
+                "0xf90abae4224ad922c2685fb88c369d902f24ec271890993e7fcd9ab80ba077b0",
+                "0xaab73fe2d249ce4ead0dec410c22fc72742a5a153df4e7ce17c09fe83ff0fcee",
+                "greetings",
+                "say_hello",
+                new List<string>(),
+                new List<string>(),
+                null,
+                "5000000" 
+                }
+            };
+
+            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+
+           
+            var response = await _httpClient.PostAsync(SuiRpcUrl, content);
+            response.EnsureSuccessStatusCode();
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var jsonResponse = JsonDocument.Parse(responseContent);
+
+            var result = jsonResponse.RootElement.GetProperty("result").GetProperty("returnValues").ToString();
+            return result;
+        }
         // Create a user on the Move blockchain
         public async Task<UserModel> CreateUserAsync(UserRegisterModel user)
         {
@@ -31,7 +68,7 @@ namespace NexusChat.Services
             if (response.IsSuccessStatusCode)
             {
                 var userData = await response.Content.ReadFromJsonAsync<UserModel>();
-                if(userData != null)
+                if (userData != null)
                 {
                     return userData;
                 }

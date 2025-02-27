@@ -1,12 +1,16 @@
 import { v4 as uuidv4 } from 'uuid';
 import React, { useRef, useState, useEffect } from "react";
 import { Message } from '../Models/Message';
+import { getUser } from '../Context/UserProvider';
+import { User } from '../Models/User';
 
 export const ChatBot: React.FC = () => {
-    
+    const user: User | null = getUser(); 
+
     const sendMessage = async (message: Message) => {
         try {
-            const response = await fetch("https://localhost:7261/api/Chat/sendMessage",
+            const apiUrl = user ? "https://localhost:7261/api/Chat/sendMessage" : "https://localhost:7261/api/Chat/sendDisconnectedMsg";
+            const response = await fetch(apiUrl,
                 {
                     method: "POST",
                     headers: {
@@ -31,6 +35,7 @@ export const ChatBot: React.FC = () => {
             console.error("Request failed", error);
         }
     };
+
 
     const [messages, setMessages] = useState<Message[]>([]);
     const [errorMessage, setErrorMessage] = useState("");

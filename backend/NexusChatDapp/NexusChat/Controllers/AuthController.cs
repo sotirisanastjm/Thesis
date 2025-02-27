@@ -23,12 +23,30 @@ namespace NexusChat.Controllers
             _userService = userService;
         }
 
+        [HttpPost("greetings")]
+        public async Task<IActionResult> Greetings()
+        {
+            await _userService.GreetingsAsync();
+            return Ok("Succeed");
+        }
+
+        [HttpPost("validate-address")]
+        public async Task<IActionResult> ValidateAddress([FromBody] string address)
+        {
+            if (address != null)
+            {
+                var isValidate = await this._authService.ValidateExistingWallet(address);
+                return Ok(isValidate);
+            }
+            return NotFound("Address is missing");
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterModel registerData)
         {
             if(registerData != null) 
             {
-                var user = await _authService.CreateUser(registerData);
+                var user = await this._userService.CreateUser(registerData);
                 if (user != null)
                 {
                     var token = _authService.GenerateJwt(user);
@@ -45,11 +63,16 @@ namespace NexusChat.Controllers
 
             if (loginData != null)
             {
-                var user = await _authService.Authenticate(loginUser: loginData);
+                var user = await _authService.AuthenticateUser(loginUser: loginData);
                 if (user != null)
                 {
                     var token = _authService.GenerateJwt(user);
-                    return Ok(token);
+                    return Ok(new
+                    {
+                        Token = token,
+                        User = new UserClientModel(user)
+                    });
+
                 }
             }
             else
@@ -60,8 +83,8 @@ namespace NexusChat.Controllers
                     var unAuthorisedUser = _userService.GetCurrentUser(currentUser);
                     if(unAuthorisedUser != null)
                     {
-                        var user = await _authService.Authenticate(unAuthorisedUser: unAuthorisedUser);
-                        return Ok(user != null ? true : false);
+                        var user = await _authService.AuthenticateUser(unAuthorisedUser: unAuthorisedUser);
+                        return Ok(user != null ? new UserClientModel(user) : false);
                     }
                     return NotFound("User Not Found");
                 }
