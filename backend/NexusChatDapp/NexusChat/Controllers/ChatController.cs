@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using NexusChat.Models;
 using NexusChat.Services;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace NexusChat.Controllers
 {
@@ -21,43 +22,78 @@ namespace NexusChat.Controllers
 
         [HttpPost("sendMessage")]
         [Authorize]
-        public async Task<IActionResult> SendMessage([FromBody] MessageItem msgRequest)
+        public async Task<IActionResult> SendMessage([FromBody] AIRequest request)
         {
             var currentUser = HttpContext.User.Identity as ClaimsIdentity;
             var user = _userService.GetCurrentUser(currentUser);
-            if (msgRequest.Message != null || msgRequest.Message != "" && user != null)
+            if (request.msgRequest.Message != null || request.msgRequest.Message != "" && user != null)
             {
                 var result = new MessageResponse();
 
-                if (user.Role == "Admin")
+                if (user.Role == "User")
                 {
-                    result = await this._aIService.GetAiResponse(msgRequest);
+                    var userChat = await this._userService.GetChatByObjectIdAsync(request.chatObjectId);
+
+                    if (userChat != null)
+                    {
+                        result = await this._aIService.GetAiResponse(request.msgRequest);
+                        return Ok(result);
+                    }
+                    BadRequest("User's Chat cannot be synchronized");
                 }
                 else
                 {
-                    result.Bot = new MessageItem("The AIService is offline, please try again later..", 0);
+                    result.Bot = new MessageItem("The AIService is offline, please try again later..", "tempID", 0);
                 }
 
                 return Ok(result);
             }
             return BadRequest("Message cannot be null or empty");
-            
+
         }
 
-        [HttpPost("sendDisconnectedMsg")]
-        public async Task<IActionResult> SendDisconnectedMessage([FromBody] MessageItem msgRequest)
+        [HttpPost("getChat")]
+        public async Task<IActionResult> getChat([FromBody] string walletAddress)
         {
-            if (msgRequest.Message != null || msgRequest.Message != "")
+            if (!string.IsNullOrEmpty(walletAddress))
             {
-                var result = new MessageResponse();
-                result.Bot = new MessageItem("The AIService is offline, please try again later..", 0);
+                var chat = await this._userService.GetChatByWalletAddress(walletAddress);
+                if (chat != null)
+                {
+                    return Ok(chat);
 
+                }
+
+                return BadRequest("Chat cannot be Found");
+            }
+            return BadRequest("Missing Wallet Address");
+
+        }
+
+        [HttpPost("addMessage")]
+        public async Task<IActionResult> addMessage([FromBody] AIRequest request)
+        {
+            if (request.msgRequest != null && !string.IsNullOrEmpty(request.chatObjectId))
+            {
+                var txBytes = await this._userService.AddMessageAsync(request.msgRequest, request.chatObjectId, request.walletAddress);
+                return Ok(new { txBytes = txBytes});
+            }
+            return BadRequest("Missing MessageItem");
+
+        }
+
+        [HttpPost("getLastDialog")]
+        public async Task<IActionResult> getLastDialog([FromBody] string objectID)
+        {
+            if (!string.IsNullOrEmpty(objectID))
+            {
+                var result = await this._userService.GetLastDialogAsync(objectID);
                 return Ok(result);
             }
-            return BadRequest("Message cannot be null or empty");
+            return BadRequest("Missing Chat objectID");
 
         }
 
     }
-    
+
 }

@@ -1,24 +1,114 @@
 ﻿using NexusChat.Models;
 using System.Text.Json;
 using System.Text;
+using System.Reflection;
+using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 
 namespace NexusChat.Services
 {
     public class MoveClient
     {
         private readonly HttpClient _httpClient;
-        private const string SuiRpcUrl = "https://fullnode.devnet.sui.io";
+        private readonly SuiSettings _settings;
 
-        public MoveClient(HttpClient httpClient)
+        public MoveClient(HttpClient httpClient, IOptions<SuiSettings> settings)
         {
-            //_httpClient = new HttpClient { BaseAddress = new Uri(SuiRpcUrl) };
             _httpClient = httpClient;
-
+            _settings = settings.Value;
         }
 
-        public async Task<string> GreetingsAsync()
+        public async Task execute_TransactionAsync(TransactionData transactionData)
         {
-            
+
+            var requestBody = new
+            {
+                jsonrpc = "2.0",
+                id = 1,
+                method = "sui_executeTransactionBlock",
+                @params = new object[]
+                {
+                    transactionData.bytes,
+                    new List<Object>
+                    {
+                       transactionData.signature
+                    },
+                    new
+                    {
+                        showInput = true,
+                        showRawInput = true,
+                        showEffects = true,
+                        showEvents = true,
+                        showObjectChanges = true,
+                        showBalanceChanges = true,
+                        showRawEffects = false
+                    },
+                    "WaitForEffectsCert"
+                }
+            };
+
+            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+            try
+            {
+                var response = await _httpClient.PostAsync(_settings.SuiRpcUrl, content);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error ExecuteTransactionBlock: {ex.Message}");
+            }
+        }
+        public async Task<string> GetObjectIDByAddressAsync(string walletAddress, string type)
+        {
+            var requestBody = new
+            {
+                jsonrpc = "2.0",
+                id = 1,
+                method = "suix_getOwnedObjects",
+                @params = new object[]
+                {
+                    walletAddress,
+                    new
+                    {
+                        filter = new
+                        {
+                            StructType = type
+                        },
+                        options = new
+                        {
+                            showType = true,
+                            showOwner = true,
+                            showPreviousTransaction = false,
+                            showDisplay = false,
+                            showContent = false,
+                            showBcs = false,
+                            showStorageRebate = false
+                        }
+                    }
+                }
+            };
+
+            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await _httpClient.PostAsync(_settings.SuiRpcUrl, content);
+                response.EnsureSuccessStatusCode();
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                return responseContent.ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching wallet objects: {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        public async Task<string> AddMessageAsync(MessageItem message, string objectID, string walletAddress)
+        {
+            ulong timestamp = (ulong)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalSeconds;
             var requestBody = new
             {
                 jsonrpc = "2.0",
@@ -26,134 +116,140 @@ namespace NexusChat.Services
                 method = "unsafe_moveCall",
                 @params = new object[]
                 {
-                "0xf90abae4224ad922c2685fb88c369d902f24ec271890993e7fcd9ab80ba077b0",
-                "0xaab73fe2d249ce4ead0dec410c22fc72742a5a153df4e7ce17c09fe83ff0fcee",
-                "greetings",
-                "say_hello",
+                walletAddress,
+                _settings.PackageID,
+                "client",
+                "add_message",
                 new List<string>(),
-                new List<string>(),
+                new List<Object>
+                    {
+                        objectID,
+                        message.Message,
+                        message.Sender.ToString(),
+                        timestamp.ToString()
+                    },
                 null,
-                "5000000" 
+                "500000000"
+                }
+            };
+            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+            try
+            {
+                var response = await _httpClient.PostAsync(_settings.SuiRpcUrl, content);
+                response.EnsureSuccessStatusCode();
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var jsonObject = JObject.Parse(jsonResponse.ToString());
+                    return jsonObject["result"]["txBytes"].ToString();
+                }
+
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error creating User: {ex.Message}");
+                return string.Empty;
+            }
+        }
+        public async Task<string> GetObjectByObjectIdAsync(string objectID)
+        {
+
+            var requestBody = new
+            {
+                jsonrpc = "2.0",
+                id = 1,
+                method = "sui_getObject",
+                @params = new object[]
+                {
+                    objectID,
+                    new
+                    {
+                        showType = true,
+                        showOwner = true,
+                        showPreviousTransaction = true,
+                        showDisplay = false,
+                        showContent = true,
+                        showBcs = false,
+                        showStorageRebate = false
+                    }
                 }
             };
 
             var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
 
-           
-            var response = await _httpClient.PostAsync(SuiRpcUrl, content);
-            response.EnsureSuccessStatusCode();
+            try
+            {
+                var response = await _httpClient.PostAsync(_settings.SuiRpcUrl, content);
+                response.EnsureSuccessStatusCode();
 
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var jsonResponse = JsonDocument.Parse(responseContent);
+                var responseContent = await response.Content.ReadAsStringAsync();
 
-            var result = jsonResponse.RootElement.GetProperty("result").GetProperty("returnValues").ToString();
-            return result;
+                return responseContent.ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching UserObject: {ex.Message}");
+                return string.Empty;
+            }
         }
-        // Create a user on the Move blockchain
-        public async Task<UserModel> CreateUserAsync(UserRegisterModel user)
+
+        public async Task<string> moveCall_CreateUserAsync(UserRegisterModel user)
         {
-            var requestData = new
-            {
-                ID = Guid.NewGuid(),
-                WalletAddress = user.WalletAddress,
-                Username = !string.IsNullOrEmpty(user.Username) ? user.Username : "",
-                Email = !string.IsNullOrEmpty(user.Email) ? user.Email : "",
-                Password = user.Password,
-                Role = "User",
-                CreatedAt = DateTime.UtcNow,
-            };
+            ulong timestamp = (ulong)DateTime.UtcNow.Subtract(DateTime.UnixEpoch).TotalSeconds;
 
-            var response = await _httpClient.PostAsJsonAsync("https://move-blockchain-api/create_user", requestData);
+            var username = !string.IsNullOrEmpty(user?.Username) ? CryptoService.Encrypt(user.Username) : "";
+            var email = !string.IsNullOrEmpty(user?.Email) ? CryptoService.Encrypt(user.Email) : "";
+            var pass = CryptoService.Encrypt(user.Password);
+            var role = CryptoService.Encrypt("User");
 
-            if (response.IsSuccessStatusCode)
+
+            var requestBody = new
             {
-                var userData = await response.Content.ReadFromJsonAsync<UserModel>();
-                if (userData != null)
+                jsonrpc = "2.0",
+                id = 1,
+                method = "unsafe_moveCall",
+                @params = new object[]
                 {
-                    return userData;
+                _settings.Signer,
+                _settings.PackageID,
+                "client",
+                "create_user",
+                new List<string>(),
+                new List<Object>
+                    {
+                        !string.IsNullOrEmpty(user?.WalletAddress) ? user.WalletAddress: "",
+                        username,
+                        email,
+                        pass,
+                        role,
+                        timestamp.ToString()
+                    },
+                null,
+                "500000000"
                 }
-            }
-
-            throw new Exception("Failed to create user on the Move blockchain.");
-        }
-
-        // Get a user by their wallet address
-        public async Task<UserModel> GetUserByWalletAsync(string walletAddress)
-        {
-            var response = await _httpClient.GetAsync($"https://move-blockchain-api/get_user_by_wallet/{walletAddress}");
-
-            if (response.IsSuccessStatusCode)
+            };
+            var content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+            try
             {
-                var user = await response.Content.ReadFromJsonAsync<UserModel>();
-                return user;
+                var response = await _httpClient.PostAsync(_settings.SuiRpcUrl, content);
+                response.EnsureSuccessStatusCode();
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonResponse = await response.Content.ReadAsStringAsync();
+                    var jsonObject = JObject.Parse(jsonResponse.ToString());
+                    return jsonObject["result"]["txBytes"].ToString();
+                }
+
+                return string.Empty;
             }
-
-            throw new Exception($"Failed to fetch user with wallet address {walletAddress} from the Move blockchain.");
-        }
-
-        // Get a user by their username
-        public async Task<UserModel> GetUserByNameAsync(string username)
-        {
-            var response = await _httpClient.GetAsync($"https://move-blockchain-api/get_user_by_username/{username}");
-
-            if (response.IsSuccessStatusCode)
+            catch (Exception ex)
             {
-                var user = await response.Content.ReadFromJsonAsync<UserModel>();
-                return user;
+                Console.WriteLine($"Error creating User: {ex.Message}");
+                return string.Empty;
             }
 
-            throw new Exception($"Failed to fetch user with username {username} from the Move blockchain.");
-        }
-        public async Task<UserModel> GetUserByEmailAsync(string email)
-        {
-            var response = await _httpClient.GetAsync($"https://move-blockchain-api/get_user_by_email/{email}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var user = await response.Content.ReadFromJsonAsync<UserModel>();
-                return user;
-            }
-
-            throw new Exception($"Failed to fetch user with email {email} from the Move blockchain.");
         }
 
-        // Get a user by their ID
-        public async Task<UserModel> GetUserByIdAsync(string id)
-        {
-            var response = await _httpClient.GetAsync($"https://move-blockchain-api/get_user_by_id/{id}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var user = await response.Content.ReadFromJsonAsync<UserModel>();
-                return user;
-            }
-
-            throw new Exception($"Failed to fetch user with ID {id} from the Move blockchain.");
-        }
-
-        public async Task<bool> UpdateUserPasswordAsync(string id, string newPassword)
-        {
-            var requestData = new { id = id, new_password = newPassword };
-            var response = await _httpClient.PostAsJsonAsync("https://move-blockchain-api/update_user_password", requestData);
-
-            if (response.IsSuccessStatusCode)
-            {
-                return true;
-            }
-
-            throw new Exception($"Failed to update user password for user with ID {id} on the Move blockchain.");
-        }
-
-        public async Task<bool> DeleteUserAsync(string id)
-        {
-            var response = await _httpClient.PostAsync($"https://move-blockchain-api/delete_user/{id}", null);
-
-            if (response.IsSuccessStatusCode)
-            {
-                return true;
-            }
-
-            throw new Exception($"Failed to delete user with ID {id} on the Move blockchain.");
-        }
     }
 }

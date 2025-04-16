@@ -80,12 +80,12 @@ export const NavBar = () => {
                     <div className="hidden lg:h-full lg:flex justify-center items-center">
                         <div className={`transition-all duration-700 grid ${isOpen ? ' grid-cols-2 gap-4 lg:grid-cols-3' : 'grid-cols-1 gap-2'}`}>
                             {/* {folders.map((folder) => (<Folder title={folder.title} active={isOpen}/>))} */}
-                            {folders.slice(0, folders.length > 6 ? 5 : folders.length).map((folder) => (
+                            {/* {folders.slice(0, folders.length > 6 ? 5 : folders.length).map((folder) => (
                                 <Folder key={folder.id} title={folder.title} active={isOpen} />
                                 ))}
                             {folders.length > 6 && (
                                 <Folder active={isOpen} moreFolders={true} />
-                            )}
+                            )} */}
                         </div>
                     </div>
                 </div>

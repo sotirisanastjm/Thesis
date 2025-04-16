@@ -10,14 +10,10 @@ namespace NexusChat.Services
     public class AuthService
     {
         private IConfiguration _config;
-        private readonly MoveClient _moveClient;
-        private readonly SuiService _suiService;
         private readonly UserService _userService;
-        public AuthService(IConfiguration config, MoveClient moveClient, SuiService suiService, UserService userService)
+        public AuthService(IConfiguration config, UserService userService)
         {
             _config = config;
-            _moveClient = moveClient;
-            _suiService = suiService;
             _userService = userService;
         }
 
@@ -27,34 +23,33 @@ namespace NexusChat.Services
             var result = new WalletValidationResult
             {
                 Validate = isWalletValid,
-                Exists = isWalletValid ? await this._userService.GetUserByWallet(address) != null : false
+                Exists = isWalletValid ? await this._userService.GetUserByWalletAddress(address) != null : false
             };
             return result;
         }
 
-        public async Task<UserModel> AuthenticateUser(UserLoginModel loginUser = null, UserModel? unAuthorisedUser=null)
+        public async Task<UserModel?> AuthenticateUser(UserLoginModel? loginUser = null, UserModel? unAuthorisedUser=null)
         {
             var userDB = new UserModel();
             var userClient = loginUser !=null ? new UserModel(loginUser) : unAuthorisedUser != null ? unAuthorisedUser : null;
 
             if (userClient != null)
             {
-                if (!string.IsNullOrEmpty(loginUser.WalletAddress))
+                if (!string.IsNullOrEmpty(loginUser?.WalletAddress))
                 {
-                    userDB = await _moveClient.GetUserByWalletAsync(loginUser.WalletAddress);
-                }
-                else if (!string.IsNullOrEmpty(loginUser.Username))
+                    userDB = await this._userService.GetUserByWalletAddress(loginUser.WalletAddress);
+                }else
                 {
-                    userDB = await _moveClient.GetUserByNameAsync(loginUser.Username);
+                    if(!string.IsNullOrEmpty(userClient.ID)){
+                        userDB = await this._userService.GetUserByObjectIdAsync(userClient.ID);
+                        if(!string.IsNullOrEmpty(userDB?.ID)){
+                            return userDB;
+                        }else{
+                            return null;
+                        }
+                    }
                 }
-                else if (!string.IsNullOrEmpty(loginUser.Email))
-                {
-                    userDB = await _moveClient.GetUserByEmailAsync(loginUser.Email);
-                }
-                else
-                {
-                    return null;
-                }
+                
                 return ValidateUser(userDB, new UserModel(loginUser)) ? userDB : null;
             }
             else
@@ -107,8 +102,8 @@ namespace NexusChat.Services
                 new Claim(ClaimTypes.Role, user.Role),
             };
 
-            var token = new JwtSecurityToken(_config["Jwt:Issuer"],
-                _config["Audience"],
+            var token = new JwtSecurityToken(this._config["Jwt:Issuer"],
+                this._config["Jwt:Audience"],
                 claims,expires: DateTime.Now.AddMinutes(30),
                 signingCredentials: credentials);
 

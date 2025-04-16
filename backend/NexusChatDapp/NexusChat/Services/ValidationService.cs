@@ -3,12 +3,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
-public class SuiService
+public class ValidationService
 {
     private readonly HttpClient _httpClient;
     private const string SuiDevnetRpcUrl = "https://fullnode.devnet.sui.io";
 
-    public SuiService(HttpClient httpClient)
+    public ValidationService(HttpClient httpClient)
     {
         _httpClient = httpClient;
     }

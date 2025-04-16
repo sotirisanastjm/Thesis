@@ -1,32 +1,30 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Projects\\Thesis\\backend\\NexusChatDapp\\NexusChat\\NexusChat.csproj": {}
+    "/Users/sotirisanastasiadis/Projects/Thesis/backend/NexusChatDapp/NexusChat/NexusChat.csproj": {}
   },
   "projects": {
-    "C:\\Projects\\Thesis\\backend\\NexusChatDapp\\NexusChat\\NexusChat.csproj": {
+    "/Users/sotirisanastasiadis/Projects/Thesis/backend/NexusChatDapp/NexusChat/NexusChat.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Projects\\Thesis\\backend\\NexusChatDapp\\NexusChat\\NexusChat.csproj",
+        "projectUniqueName": "/Users/sotirisanastasiadis/Projects/Thesis/backend/NexusChatDapp/NexusChat/NexusChat.csproj",
         "projectName": "NexusChat",
-        "projectPath": "C:\\Projects\\Thesis\\backend\\NexusChatDapp\\NexusChat\\NexusChat.csproj",
-        "packagesPath": "C:\\Users\\EX931HA\\.nuget\\packages\\",
-        "outputPath": "C:\\Projects\\Thesis\\backend\\NexusChatDapp\\NexusChat\\obj\\",
+        "projectPath": "/Users/sotirisanastasiadis/Projects/Thesis/backend/NexusChatDapp/NexusChat/NexusChat.csproj",
+        "packagesPath": "/Users/sotirisanastasiadis/.nuget/packages/",
+        "outputPath": "/Users/sotirisanastasiadis/Projects/Thesis/backend/NexusChatDapp/NexusChat/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\EX931HA\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/Users/sotirisanastasiadis/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
-          "net6.0"
+          "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net6.0": {
-            "targetAlias": "net6.0",
+          "net8.0": {
+            "targetAlias": "net8.0",
             "projectReferences": {}
           }
         },
@@ -34,12 +32,25 @@
           "warnAsError": [
             "NU1605"
           ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
         }
       },
       "frameworks": {
-        "net6.0": {
-          "targetAlias": "net6.0",
+        "net8.0": {
+          "targetAlias": "net8.0",
           "dependencies": {
+            "CardanoBech32": {
+              "target": "Package",
+              "version": "[0.9.1, )"
+            },
+            "Ed25519": {
+              "target": "Package",
+              "version": "[1.0.0, )"
+            },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[6.0.20, )"
@@ -52,9 +63,25 @@
               "target": "Package",
               "version": "[8.2.0, )"
             },
+            "NBitcoin": {
+              "target": "Package",
+              "version": "[5.0.4, )"
+            },
+            "NSec.Cryptography": {
+              "target": "Package",
+              "version": "[24.4.0, )"
+            },
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.3, )"
+            },
+            "SimpleBase": {
+              "target": "Package",
+              "version": "[4.0.2, )"
+            },
+            "Sodium.Core": {
+              "target": "Package",
+              "version": "[1.3.5, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
@@ -84,7 +111,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.406/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

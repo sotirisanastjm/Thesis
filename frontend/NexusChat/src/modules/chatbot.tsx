@@ -1,76 +1,127 @@
-import { v4 as uuidv4 } from 'uuid';
-import React, { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Message } from '../Models/Message';
-import { getUser } from '../Context/UserProvider';
-import { User } from '../Models/User';
+import { useUser } from '../Context/UserProvider';
+import { signTransaction, executeTransaction } from '../services/TransactionService';
+import { fetchChat, sendMessageToAPI, addMessageToBlockchain, fetchLastDialog } from '../services/ChatService';
 
 export const ChatBot: React.FC = () => {
-    const user: User | null = getUser(); 
-
-    const sendMessage = async (message: Message) => {
-        try {
-            const apiUrl = user ? "https://localhost:7261/api/Chat/sendMessage" : "https://localhost:7261/api/Chat/sendDisconnectedMsg";
-            const response = await fetch(apiUrl,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        accept: "*/*",
-                    },
-                    body: JSON.stringify(message),
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                if(data.bot){
-                    setMessages((prevMessages) => [ ...prevMessages, data.bot, ]);
-                }else if(!data.bot && data.error){
-                    setErrorMessage(data.error);
-                }
-            } else {
-                console.error("Error:", response.statusText);
-            }
-        } catch (error) {
-            console.error("Request failed", error);
-        }
-    };
-
-
-    const [messages, setMessages] = useState<Message[]>([]);
+    const { user, token, messages, setChatID, getChatID, addMessage, setMessages, updateMessage } = useUser();
     const [errorMessage, setErrorMessage] = useState("");
-
-    const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const [messageText, setMessageText] = useState("");
+    const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+    const [allMessages, setAllMessages] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [newMessagesLoaded, setNewMessagesLoaded] = useState(false);
 
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (!newMessagesLoaded) {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            setNewMessagesLoaded(false);
+        }
     }, [messages]);
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setMessageText(e.target.value);
+    useEffect(() => {
+        const fetchData = async () => {
+            if (messages.length <= 0 && user) {
+                try {
+                    setLoading(true);
+                    var allMsgs = await fetchChat(user.walletAddress, setChatID);
+                    if(allMsgs.length > 0){
+                        setAllMessages(allMsgs);
+                        if (allMsgs.length > 20) {
+                            setMessages(allMsgs.slice(allMsgs.length - 20, allMsgs.length));
+                        } else {
+                            setMessages(allMsgs);
+                        }
+                    }
+                    setLoading(false);
+                    setNewMessagesLoaded(false);
+                } catch (error) {
+                    console.error("Error fetching chat:", error);
+                }
+            }
+        };
+        fetchData();
+    }, [user, messages]);
+
+    const loadMore = () => {
+        if (loading || (messages.length == allMessages.length)) return;
+        setLoading(true);
+        if (allMessages.length - messages.length > 10) {
+            const prevMessages = allMessages.slice(allMessages.length - messages.length - 10, allMessages.length - messages.length);
+            setMessages([...prevMessages, ...messages]);
+
+        } else {
+            const prevMessages = allMessages.slice(0, allMessages.length - messages.length)
+            setMessages([...prevMessages, ...messages]);
+        }
+        setLoading(false);
+        setNewMessagesLoaded(true);
+
     };
+
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => setMessageText(e.target.value);
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter" && messageText != "") {
+        if (e.key === "Enter" && messageText !== "") {
             e.preventDefault();
-            addMessage(messageText);
+            sendMessage(messageText);
         }
     };
 
-    const addMessage = (message: string) => {
-        if (messageText != "") {
-            var userMsg: Message = {
-                id:  uuidv4(),
-                date: new Date(),
-                message: message,
-                sender: 1
+    const sendMessage = async (message: string) => {
+        try {
+            if (message) {
+                const userMsg: Message = { id: "temp-id-user", date: new Date(), message, sender: 1 };
+                addMessage(userMsg);
+                setMessageText("");
+
+                const request = { msgRequest: userMsg, chatObjectId: getChatID() };
+                const response = await sendMessageToAPI(request, token);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.bot) {
+                        data.bot.id = "temp-id-ai";
+                        addMessage(data.bot);
+
+                        await handleTransaction(userMsg, data.bot);
+                    } else if (data.error) {
+                        setErrorMessage(data.error);
+                    }
+                } else {
+                    console.error("Error sending message:", response.statusText);
+                }
             }
-            setMessages((prevMessages) => [ ...prevMessages, userMsg, ]);
-            sendMessage(userMsg);
-            setMessageText("");
+        } catch (error) {
+            console.error("Request failed:", error);
         }
     };
+
+    const handleTransaction = async (userMsg: Message, botMsg: Message) => {
+        try {
+            const userTxBytes = await addMessageToBlockchain(userMsg, getChatID(), token, user?.walletAddress);
+            const userMsgBlock = await signTransaction(userTxBytes.txBytes);
+            await executeTransaction(userMsgBlock, token);
+            await delay(2000);
+
+            const botTxBytes = await addMessageToBlockchain(botMsg, getChatID(), token, user?.walletAddress);
+            const botMsgBlock = await signTransaction(botTxBytes.txBytes);
+            await executeTransaction(botMsgBlock, token);
+            await delay(2000);
+
+            const dialogResponse = await fetchLastDialog(getChatID(), token);
+            updateMessage(dialogResponse.userMessage, userMsg.id);
+            updateMessage(dialogResponse.botMessage, botMsg.id);
+
+        } catch (error) {
+            console.error("Transaction processing failed:", error);
+        }
+    };
+
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
     return (
         <>
@@ -93,7 +144,7 @@ export const ChatBot: React.FC = () => {
                         <button
                             type="button"
                             className="hover:cursor-pointer"
-                            onClick={() => addMessage(messageText)}
+                            onClick={() => sendMessage(messageText)}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -117,14 +168,16 @@ export const ChatBot: React.FC = () => {
             <section className="container inset-0 absolute h-fit">
                 <div className="overflow-y-auto pb-32 pt-14">
                     <div className="flex-1 w-full h-full justify-end flex flex-col space-y-8">
+                        {loading && (<div className="w-10 h-10 border-4 border-t-dark-200 shadow-sm border-dark-500 rounded-full animate-spin self-center"></div>
+                        )}
+                        {((allMessages.length - messages.length > 0) && messages.length > 0 && !loading) && (<button onClick={() => loadMore()} className="bg-dark-900 !text-xs self-center text-dark-200 ring-1 ring-dark-600 hover:ring-2 hover:ring-dark-300 duration-300 rounded-xl px-4 py-2 hover:shadow-[0px_0px_20px_5px_rgba(128,128,128,1)] shadow-md active:shadow-2xl active:shadow-dark-400 w-full md:w-fit">Load more</button>)}
                         {messages.map((message) => (
                             <div
                                 key={message.id}
-                                className={`py-4 px-6 rounded-lg max-w-[70%] ${
-                                    message.sender === 0
-                                        ? "bg-dark-600 self-start"
-                                        : "bg-brown-700 self-end"
-                                }`}
+                                className={`py-4 px-6 rounded-lg max-w-[70%] ${message.sender === 0
+                                    ? "bg-dark-600 self-start"
+                                    : "bg-brown-700 self-end"
+                                    }`}
                             >
                                 {message.message}
                             </div>

@@ -23,13 +23,6 @@ namespace NexusChat.Controllers
             _userService = userService;
         }
 
-        [HttpPost("greetings")]
-        public async Task<IActionResult> Greetings()
-        {
-            await _userService.GreetingsAsync();
-            return Ok("Succeed");
-        }
-
         [HttpPost("validate-address")]
         public async Task<IActionResult> ValidateAddress([FromBody] string address)
         {
@@ -44,15 +37,11 @@ namespace NexusChat.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegisterModel registerData)
         {
-            if(registerData != null) 
+            if (registerData != null)
             {
-                var user = await this._userService.CreateUser(registerData);
-                if (user != null)
-                {
-                    var token = _authService.GenerateJwt(user);
-                    return Ok(token);
-                }
-                return Ok("There is a problem with your Data");
+                var txBytesUser = await this._userService.CreateUser(registerData);
+                return Ok(new { txBytesUser = txBytesUser});
+
             }
             return Ok("Missing Fields");
         }
@@ -61,9 +50,10 @@ namespace NexusChat.Controllers
         public async Task<IActionResult> Login([FromBody] UserLoginModel loginData)
         {
 
-            if (loginData != null)
+            if (!string.IsNullOrEmpty(loginData?.WalletAddress))
             {
                 var user = await _authService.AuthenticateUser(loginUser: loginData);
+                var userDB = await this._userService.GetUserByWalletAddress(loginData.WalletAddress);
                 if (user != null)
                 {
                     var token = _authService.GenerateJwt(user);
@@ -74,6 +64,10 @@ namespace NexusChat.Controllers
                     });
 
                 }
+                else if (user == null && userDB != null)
+                {
+                    return Ok(new { Message = "Wrong Password" });
+                }
             }
             else
             {
@@ -81,7 +75,7 @@ namespace NexusChat.Controllers
                 if (currentUser != null)
                 {
                     var unAuthorisedUser = _userService.GetCurrentUser(currentUser);
-                    if(unAuthorisedUser != null)
+                    if (unAuthorisedUser != null)
                     {
                         var user = await _authService.AuthenticateUser(unAuthorisedUser: unAuthorisedUser);
                         return Ok(user != null ? new UserClientModel(user) : false);
@@ -93,11 +87,17 @@ namespace NexusChat.Controllers
             return NotFound("User Not Found");
         }
 
-        //[HttpPost("logout")]
-        //public async Task<IActionResult> Logout()
-        //{
-        //    return Ok("Logout successful.");
-        //}
+        // [HttpPost("delete")]
+        // public async Task<IActionResult> DeleteUser([FromBody] string walletAddress)
+        // {
+        //     if (!string.IsNullOrEmpty(walletAddress))
+        //     {
+        //         var result = await _userService.DeleteUser(walletAddress);
+        //         return Ok(result);
+        //     }
+        //     return Ok(new { Message = "Wrong Wallet Address" });
+        // }
+
     }
 
 }

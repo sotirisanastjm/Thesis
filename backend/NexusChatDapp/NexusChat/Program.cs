@@ -21,7 +21,8 @@ builder.Services.AddCors(options =>
     {
         builder.WithOrigins("http://localhost:5173")
                .AllowAnyMethod()
-               .AllowAnyHeader();
+               .AllowAnyHeader()
+               .AllowCredentials();
     });
 });
 
@@ -32,10 +33,24 @@ builder.Services.AddSingleton<AIService>(provider =>
     return new AIService(provider.GetRequiredService<HttpClient>(), apiKeyAI);
 });
 
-builder.Services.AddSingleton<SuiService>();
+string AESKey = builder.Configuration["AES:Key"];
+string AESIv = builder.Configuration["AES:IV"];
+
+var configuration = builder.Configuration;
+string encryptionKey = configuration["AES:Key"];
+string encryptionIV = configuration["AES:IV"];
+CryptoConfig.Key = encryptionKey;
+CryptoConfig.IV = encryptionIV;
+
+builder.Services.Configure<SuiSettings>(builder.Configuration.GetSection("Sui"));
 builder.Services.AddSingleton<MoveClient>();
+
+builder.Services.AddSingleton<ValidationService>();
 builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<UserService>();
+
+
+
 
 string Jwtkey = builder.Configuration["Jwt:Key"];
 string Issuer = builder.Configuration["Jwt:Issuer"];
@@ -70,8 +85,8 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowReactApp");
 
 app.UseHttpsRedirection();
-app.UseAuthorization();
 app.UseAuthentication();
+app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
