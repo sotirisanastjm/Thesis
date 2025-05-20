@@ -41,7 +41,7 @@ namespace NexusChat.Services
                 }else
                 {
                     if(!string.IsNullOrEmpty(userClient.ID)){
-                        userDB = await this._userService.GetUserByObjectIdAsync(userClient.ID);
+                        userDB = await this._userService.GetUserByWalletAddress(userClient.ID);
                         if(!string.IsNullOrEmpty(userDB?.ID)){
                             return userDB;
                         }else{
@@ -68,39 +68,50 @@ namespace NexusChat.Services
             {
                 return false;
             }
-
-            if (!string.IsNullOrEmpty(request.Username) &&
-                user.Username != request.Username)
+            
+            if (!string.IsNullOrEmpty(request.ID) &&
+                user.ID != request.ID)
             {
                 return false;
             }
 
-            if (!string.IsNullOrEmpty(request.Email) &&
-                user.Email != request.Email)
-            {
-                return false;
-            }
+            // if (!string.IsNullOrEmpty(request.Username) &&
+            //     user.Username != request.Username)
+            // {
+            //     return false;
+            // }
 
-            if (user.Password != request.Password)
-            {
-                return false;
-            }
+            // if (!string.IsNullOrEmpty(request.Email) &&
+            //     user.Email != request.Email)
+            // {
+            //     return false;
+            // }
+
+            // if (user.Password != request.Password)
+            // {
+            //     return false;
+            // }
 
             return true;
         }
 
-        private string GetJwtToken(UserModel user)
+        private string GetJwtToken(string walletAddress, string role)
         {
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
             var credentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-                new Claim(ClaimTypes.NameIdentifier, user.ID.ToString()),
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.NameIdentifier, walletAddress),
+                new Claim(ClaimTypes.Role, role),
             };
+            // var claims = new[]
+            // {
+            //     new Claim(ClaimTypes.NameIdentifier, user.ID.ToString()),
+            //     new Claim(ClaimTypes.Name, user.Username),
+            //     new Claim(ClaimTypes.Email, user.Email),
+            //     new Claim(ClaimTypes.Role, user.Role),
+            // };
 
             var token = new JwtSecurityToken(this._config["Jwt:Issuer"],
                 this._config["Jwt:Audience"],
@@ -110,9 +121,9 @@ namespace NexusChat.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public string GenerateJwt(UserModel user)
+        public string GenerateJwt(string walletAddress, string role)
         {
-            return GetJwtToken(user);
+            return GetJwtToken(walletAddress, role);
         }
     }
 }

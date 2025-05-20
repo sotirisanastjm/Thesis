@@ -20,7 +20,7 @@ namespace NexusChat.Models
             foreach (var msg in messagesArray)
             {
                 var id = msg["fields"]["id"]?["id"]?.ToString();
-                var message = ConvertByteArrayToString(msg["fields"]["message"]);
+                var message = CryptoService.Decrypt(ConvertByteArrayToString(msg["fields"]["message"]));
                 var date = ConvertUnixTimestampToDateTime(msg["fields"]["date"]?.ToString() ?? "0");
                 var senderStr = ConvertByteArrayToString(msg["fields"]["sender"]);
                 int sender = int.TryParse(senderStr, out var parsedSender) ? parsedSender : 0;

@@ -22,6 +22,27 @@ namespace NexusChat.Controllers
             _authService = authService;
         }
 
+        // [HttpPost("execute_createUser")]
+        // public async Task<IActionResult> Execute_CreateUser([FromBody] CreateUserRequest request)
+        // {
+        //     if (request.TransactionUserData != null)
+        //     {
+        //         await this._userService.execute_TransactionAsync(request.TransactionUserData);
+        //         var userDB = await this._userService.GetUserByWalletAddress(request.WalletAddress);
+        //         // await this._userService.execute_TransactionAsync(request.TransactionChatData);
+        //         if (userDB != null)
+        //         {
+        //             // var token = this._authService.GenerateJwt(userDB);
+        //             // return Ok(new
+        //             // {
+        //             //     Token = token,
+        //             //     User = new UserClientModel(userDB)
+        //             // });
+        //         }
+        //     }
+        //     return Ok("Failed To Register the User");
+        // }
+
         [HttpPost("execute_createUser")]
         public async Task<IActionResult> Execute_CreateUser([FromBody] CreateUserRequest request)
         {
@@ -32,7 +53,7 @@ namespace NexusChat.Controllers
                 // await this._userService.execute_TransactionAsync(request.TransactionChatData);
                 if (userDB != null)
                 {
-                    var token = this._authService.GenerateJwt(userDB);
+                    var token = this._authService.GenerateJwt(userDB.WalletAddress, userDB.Role);
                     return Ok(new
                     {
                         Token = token,

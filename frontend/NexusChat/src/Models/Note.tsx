@@ -1,4 +1,4 @@
-export type Message = {
+export type Note = {
     id: string;
     date: Date;
     message: string;

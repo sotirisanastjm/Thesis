@@ -32,14 +32,14 @@ namespace NexusChat.Controllers
 
                 if (user.Role == "User")
                 {
-                    var userChat = await this._userService.GetChatByObjectIdAsync(request.chatObjectId);
+                    result = await this._aIService.GetAiResponse(request.msgRequest);
+                    return Ok(result);
+                    // var userChat = await this._userService.GetChatByObjectIdAsync(request.chatObjectId);
 
-                    if (userChat != null)
-                    {
-                        result = await this._aIService.GetAiResponse(request.msgRequest);
-                        return Ok(result);
-                    }
-                    BadRequest("User's Chat cannot be synchronized");
+                    // if (userChat != null)
+                    // {
+                    // }
+                    // BadRequest("User's Chat cannot be synchronized");
                 }
                 else
                 {

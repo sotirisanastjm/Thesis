@@ -132,6 +132,41 @@ namespace NexusChat.Services
             return null;
         }
 
+        public async Task<Notepad?> GetNotepadByWalletAddress(string walletAddress)
+        {
+            if (!string.IsNullOrEmpty(walletAddress))
+            {
+                var notepadId = await GetObjectIDByAddressAsync(walletAddress, _settings.StructTypeNotepad);
+                if (!string.IsNullOrEmpty(notepadId))
+                {
+                    var notepad = await GetNotepadByObjectIdAsync(notepadId);
+                    return notepad;
+                }
+            }
+            return null;
+        }
+
+        public async Task<Notepad> GetNotepadByObjectIdAsync(string notepadId)
+        {
+            var result = new Notepad();
+            try
+            {
+                var response = await _moveClient.GetObjectByObjectIdAsync(notepadId);
+                if (!string.IsNullOrEmpty(response))
+                {
+                    var jsonObject = JObject.Parse(response);
+                    JObject fields = (JObject)jsonObject["result"]["data"]["content"]["fields"];
+                    result = new Notepad(fields);
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"GetUserByObjectIdAsync Service Error: {ex.Message}");
+            }
+            return result;
+        }
+
         public async Task<string> AddMessageAsync(MessageItem message, string objectID, string walletAddress)
         {
             if (message != null)
@@ -150,7 +185,7 @@ namespace NexusChat.Services
         {
             var chat = await GetChatByObjectIdAsync(chatObjectId);
             var result = new TransactionMessageResponse();
-            result.UserMessage = chat.Messages[chat.Messages.Count()-2];
+            result.UserMessage = chat.Messages[chat.Messages.Count() - 2];
             result.BotMessage = chat.Messages[chat.Messages.Count() - 1];
             return result;
         }
@@ -161,25 +196,35 @@ namespace NexusChat.Services
             return new UserModel
             {
                 ID = userClaims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value,
-                Username = userClaims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value,
-                Email = userClaims.FirstOrDefault(x => x.Type == ClaimTypes.Email)?.Value,
                 Role = userClaims.FirstOrDefault(x => x.Type == ClaimTypes.Role)?.Value
             };
+
         }
 
-        public async Task<string> CreateUser(UserRegisterModel model)
+        public async Task<string> CreateClient(string walletAddress)
         {
-            if (!string.IsNullOrEmpty(model.WalletAddress) && !string.IsNullOrEmpty(model.Password))
+            if (!string.IsNullOrEmpty(walletAddress))
             {
-                var walletIsValid = await ValidateWallet(model.WalletAddress);
+                var walletIsValid = await ValidateWallet(walletAddress);
                 if (walletIsValid)
                 {
-                    var txBytes = await _moveClient.moveCall_CreateUserAsync(model);
+                    var txBytes = await _moveClient.moveCall_CreateClientAsync(walletAddress);
                     return txBytes;
                 }
                 throw new Exception("Wrong Address");
             }
             throw new MissingFieldException();
+        }
+        public async Task<string> CreateFolder(CreateFolderRequest request)
+        {
+            var txBytes = await _moveClient.CreateFolderAsync(request.name, request.objectId, request.wallet);
+            return txBytes;
+        }
+
+        public async Task<string> AddNoteAsync(AddNoteRequest request)
+        {
+            var txBytes = await _moveClient.AddNoteAsync(request.note, request.objectId, request.index , request.wallet);
+            return txBytes;
         }
 
         public async Task execute_TransactionAsync(TransactionData transactionData)
@@ -188,19 +233,6 @@ namespace NexusChat.Services
             await _moveClient.execute_TransactionAsync(transactionData);
         }
 
-        // public async Task<bool> DeleteUser(string walletAddress)
-        // {
-        //     if (!string.IsNullOrEmpty(walletAddress))
-        //     {
-        //         var objectId = await GetObjectIDByAddressAsync(walletAddress);
-        //         if (!string.IsNullOrEmpty(objectId))
-        //         {
-        //             var result = await _moveClient.DeleteUserAsync(walletAddress, objectId);
-        //             return result;
-        //         }
-        //     }
-        //     return false;
-        // }
         public async Task<bool> ValidateWallet(string address)
         {
             if (!string.IsNullOrEmpty(address))

@@ -10,13 +10,39 @@ body {
   height: 100vh;
 }
 
-body section{
+body section {
   margin-bottom: 6rem;
 }
 
 @media (min-width: 768px) {
   body section {
-      margin-bottom: 10rem;
+    margin-bottom: 10rem;
   }
 }
 
+
+.ConnectModal_overlay__gz8z90 {
+  @apply text-lg fixed inset-0 backdrop-blur-sm z-[1000] h-full w-full flex justify-center items-center;
+
+  .ConnectModal_content__gz8z92 {
+    @apply transition-transform transform duration-1000 justify-between flex gap-8 flex-row items-start p-6 ease-in-out w-[90%] h-[55%] lg:h-[60%] lg:w-[80%] bg-dark-700 rounded-2xl shadow-2xl shadow-dark-400 relative;
+
+  }
+
+  section {
+    @apply mb-4;
+  }
+
+  .WalletListItem_container__1dqqtqs0 {
+    @apply flex flex-col gap-4 mt-4;
+
+    .WalletListItem_walletItem__1dqqtqs1 {
+      @apply flex flex-row gap-2 justify-between items-center bg-dark-600 px-4 py-2 rounded-xl;
+    }
+  }
+
+}
+
+.center-modal {
+  transform: translate(-50%, -50%);
+}

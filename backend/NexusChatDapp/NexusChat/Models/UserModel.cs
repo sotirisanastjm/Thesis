@@ -14,9 +14,9 @@ namespace NexusChat.Models
     {
         public string ID { get; set; }
         public string WalletAddress { get; set; }
-        public string Username { get; set; }
-        public string Email { get; set; }
-        public string Password { get; set; }
+        // public string Username { get; set; }
+        // public string Email { get; set; }
+        // public string Password { get; set; }
         public string Role { get; set; }
         public DateTime CreatedAt { get; set; }
 
@@ -25,18 +25,18 @@ namespace NexusChat.Models
         public UserModel(UserLoginModel user)
         {
             WalletAddress = user.WalletAddress;
-            Username = user.Username;
-            Email = user.Email;
-            Password = user.Password;
+            // Username = user.Username;
+            // Email = user.Email;
+            // Password = user.Password;
         }
 
         public UserModel(JObject? fields)
         {
             ID = fields["id"]["id"].ToString();
             WalletAddress = fields["wallet_address"].ToString();
-            Username = CryptoService.Decrypt(ConvertByteArrayToString(fields["username"]));
-            Email = CryptoService.Decrypt(ConvertByteArrayToString(fields["email"]));
-            Password = CryptoService.Decrypt(ConvertByteArrayToString(fields["password"]));
+            // Username = CryptoService.Decrypt(ConvertByteArrayToString(fields["username"]));
+            // Email = CryptoService.Decrypt(ConvertByteArrayToString(fields["email"]));
+            // Password = CryptoService.Decrypt(ConvertByteArrayToString(fields["password"]));
             Role = CryptoService.Decrypt(ConvertByteArrayToString(fields["role"]));
             CreatedAt = ConvertUnixTimestampToDateTime(fields["created_at"].ToString());
         }

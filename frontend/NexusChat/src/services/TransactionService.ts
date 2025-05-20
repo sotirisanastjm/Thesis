@@ -1,7 +1,7 @@
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { fromB64 } from "@mysten/sui.js/utils";
 
-const PRIVATE_KEY = "suiprivkey1qqf057xqy3rs7t8qumv9wq22lz5468szh64dw58g3a6r2hle938zvysjtge";
+const PRIVATE_KEY = "suiprivkey1qqf057xqy3rs7t8qumv9wq22lz5468szh64dw58g3a6r2hle938zvysjtge"; {/* TODO: Hide the key */}
 
 export const signTransaction = async (txBytesBase64: any) => {
     const keypair = Ed25519Keypair.fromSecretKey(PRIVATE_KEY);
@@ -22,14 +22,14 @@ export const executeTransaction = async (block: any, token: any) => {
     if (!response.ok) throw new Error("Transaction failed");
 };
 
-export const executeCreateUser = async (transactionUserData: any, formData: any) => {
+export const executeCreateUser = async (transactionUserData: any, walletAddress: any) => {
     try {
         const response = await fetch("https://localhost:7261/api/Transaction/execute_createUser", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ TransactionUserData: transactionUserData, WalletAddress: formData.walletAddress }),
+            body: JSON.stringify({ TransactionUserData: transactionUserData, WalletAddress: walletAddress }),
         });
 
         if (!response.ok) {
