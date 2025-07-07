@@ -1,7 +1,7 @@
 import { Ed25519Keypair } from "@mysten/sui/keypairs/ed25519";
 import { fromB64 } from "@mysten/sui.js/utils";
 
-const PRIVATE_KEY = "suiprivkey1qqf057xqy3rs7t8qumv9wq22lz5468szh64dw58g3a6r2hle938zvysjtge"; {/* TODO: Hide the key */}
+const PRIVATE_KEY = process.env.REACT_APP_PRIVATE_KEY || "";
 
 export const signTransaction = async (txBytesBase64: any) => {
     const keypair = Ed25519Keypair.fromSecretKey(PRIVATE_KEY);
